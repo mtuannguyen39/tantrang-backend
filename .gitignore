@@ -1,0 +1,42 @@
+# Node modules
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# dotenv env files (chứa biến môi trường bảo mật như DATABASE_URL)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Prisma generated files
+prisma/dev.db
+prisma/dev.db-journal
+prisma/migrations/
+prisma/.DS_Store
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build output
+dist/
+build/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Vscode settings
+.vscode/
+
+# Mac system files
+*.DS_Store

@@ -1,0 +1,81 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model Category {
+    id              Int @id @default(autoincrement())
+    name            String
+    slug            String @unique
+
+    news            News[]
+    tntt            TNTT[]
+    bibleReadings   BibleReading[]
+    liturgicalYears LiturgicalYear[]
+}
+
+model LiturgicalYear {
+    id              Int @id @default(autoincrement())
+    name            String // Ví dụ: "Năm phụng vụ A - 2025"
+    code            String // A, B, C
+    year            Int // 2025
+
+    readings        BibleReading[]
+    news            News[]
+
+    categoryId      Int
+    category        Category @relation(fields: [categoryId], references: [id])
+}
+
+model News {
+    id              Int @id @default(autoincrement())
+    title           String
+    slug            String @unique 
+    content         String 
+    thumbnail       String?
+    categoryId      Int
+    liturgicalYearId Int?
+    isFeatured       Boolean @default(false)
+
+    category        Category @relation(fields: [categoryId], references: [id])
+    liturgicalYear LiturgicalYear? @relation(fields: [liturgicalYearId], references: [id])
+
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt
+}
+
+model TNTT {
+    id              Int @id @default(autoincrement())
+    title           String
+    slug            String @unique
+    description     String?
+    thumbnail       String?
+    isFeatured       Boolean @default(false)
+
+    categoryId      Int
+    category        Category @relation(fields: [categoryId], references: [id])
+
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt
+}
+
+model BibleReading {
+    id              Int @id @default(autoincrement())
+    title           String
+    slug            String @unique
+    scripture       String // Ví dụ: Ga 3, 16-18
+    content         String
+    date            DateTime
+    liturgicalYearId Int
+
+    liturgicalYear LiturgicalYear @relation(fields: [liturgicalYearId], references: [id])
+    categoryId      Int
+    category        Category @relation(fields: [categoryId], references: [id])
+
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt
+}
