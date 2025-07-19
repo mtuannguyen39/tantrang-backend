@@ -43,4 +43,39 @@ router.post("/upload", upload.single("file"), async (req, res) => {
   }
 });
 
+router.delete("/delete-image", async (req, res) => {
+  try {
+    const { imageUrl } = req.body;
+
+    if (!imageUrl) {
+      res.status(400).json({ error: "Không có URL ảnh để xóa!" });
+      return;
+    }
+
+    // Lấy tên file từ URL (bỏ /uploads/ ở đầu)
+    const filename = imageUrl.replace("/uploads/", "");
+
+    // Tạo đường dẫn đầy đủ tới file
+    const filePath = path.join(__dirname, "../../uploads", filename);
+
+    //Kiểm tra file có tồn tại không
+    if (!fs.existsSync(filePath)) {
+      res.status(404).json({ error: "File ảnh không tồn tại!" });
+      return;
+    }
+
+    // Xóa file
+    fs.unlinkSync(filePath);
+
+    res.json({
+      success: true,
+      message: "Đã xóa ảnh thành công!",
+      deletedFile: filename,
+    });
+  } catch (err) {
+    console.error("🔥 Deleted image failed: ", err);
+    res.status(500).json({ error: "Xóa ảnh thất bại!!!" });
+  }
+});
+
 export default router;
