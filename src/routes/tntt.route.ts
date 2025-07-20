@@ -1,4 +1,5 @@
 import express from "express";
+import { Request, Response } from "express";
 import {
   createTntt,
   deleteTntt,
@@ -50,40 +51,48 @@ router.post("/upload", upload.single("file"), async (req, res) => {
   }
 });
 
-router.delete("/delete-image", async (req, res) => {
-  try {
-    const { imageUrl } = req.body;
+// DELETE /api/news/delete-image
+const deleteImageHandler = (req: Request, res: Response): void => {
+  const { imageUrl } = req.body;
 
-    if (!imageUrl) {
-      res.status(400).json({ error: "Không có URL ảnh để xóa!" });
-      return;
-    }
-
-    // Lấy tên file từ URL (bỏ /uploads/ ở đầu)
-    const filename = imageUrl.replace("/uploadTntt/", "");
-
-    // Tạo đường dẫn đầy đủ tới file
-    const filePath = path.join(__dirname, "../../uploadTntt", filename);
-
-    //Kiểm tra file có tồn tại không
-    if (!fs.existsSync(filePath)) {
-      res.status(404).json({ error: "File ảnh không tồn tại!" });
-      return;
-    }
-
-    // Xóa file
-    fs.unlinkSync(filePath);
-
-    res.json({
-      success: true,
-      message: "Đã xóa ảnh thành công!",
-      deletedFile: filename,
-    });
-  } catch (err) {
-    console.error("🔥 Deleted image failed: ", err);
-    res.status(500).json({ error: "Xóa ảnh thất bại!!!" });
+  if (!imageUrl) {
+    res.status(400).json({ error: "URL ảnh không được cung cấp" });
+    return;
   }
-});
+
+  // Trích xuất tên file từ URL
+  const filename = path.basename(imageUrl);
+  const filePathToDelete = path.join(__dirname, "../../uploadTntt", filename);
+
+  // Kiểm tra xem file có tồn tại và nằm trong thư mục 'uploads' không để tăng cao hệ thống bảo mật
+  if (!filePathToDelete.startsWith(path.join(__dirname, "../../uploadTntt"))) {
+    res
+      .status(403)
+      .json({ error: "Truy cập bị từ chối: Đường dẫn file không hợp lệ." });
+    return;
+  }
+
+  fs.unlink(filePathToDelete, (err) => {
+    if (err) {
+      if (err.code === "ENOENT") {
+        console.warn(
+          `Attempted to delete non-existent file: ${filePathToDelete}`
+        );
+        res.status(404).json({ error: "File không tồn tại hoặc đã bị xóa." });
+        return;
+      }
+      console.error(`Error deleting file: ${filePathToDelete}:`, err);
+      res.status(500).json({ error: "Không thể xóa file." });
+      return;
+    }
+
+    res
+      .status(200)
+      .json({ message: `File ${filename} đã được xóa thành công.` });
+  });
+};
+
+router.delete("/delete-image", deleteImageHandler);
 
 router.get("/", getTntt);
 router.get("/:id", getTnttDetail);

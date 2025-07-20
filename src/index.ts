@@ -6,7 +6,6 @@ import path from "path";
 import { errorHandler } from "./middlewares/errorHandler";
 
 import newsRoutes from "./routes/news.route";
-import newsUploadRoute from "./routes/news.upload.route";
 import readingRoutes from "./routes/bibleReading.route";
 import categoryRoutes from "./routes/category.route";
 import tnttRoutes from "./routes/tntt.route";
@@ -29,7 +28,6 @@ app.use("/api/year", yearRoutes);
 app.use("/api/category", categoryContentRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/news", newsRoutes);
-app.use("/api/news", newsUploadRoute);
 
 // Static file để truy cập ảnh của NEWS
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
