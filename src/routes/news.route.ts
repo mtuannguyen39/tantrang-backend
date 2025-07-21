@@ -1,8 +1,7 @@
+// src/routes/news.route.ts
 import express from "express";
 import { Request, Response } from "express";
 import multer from "multer";
-import path from "path";
-import fs from "fs";
 import sharp from "sharp";
 import { supabase } from "../config/supabase";
 import { v4 as uuidv4 } from "uuid";
@@ -16,86 +15,103 @@ import {
 
 const router = express.Router();
 
-// Dùng memoryStorage vì cần buffer ảnh cho sharp
+// Dùng memoryStorage để nhận buffer của file, rất tốt cho Sharp
 const storage = multer.memoryStorage();
-const upload = multer({ storage });
+// Cấu hình Multer với giới hạn kích thước file
+// Ví dụ: giới hạn 5MB. Điều này giúp ngăn chặn các file quá lớn gây lỗi Sharp
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+  fileFilter: (req, file, cb) => {
+    // Chỉ chấp nhận các loại file ảnh phổ biến
+    if (file.mimetype.startsWith("image/")) {
+      cb(null, true);
+    } else {
+      cb(null, false);
+    }
+  },
+});
 
 // POST /api/news/upload
 router.post(
   "/upload",
-  upload.single("file"),
+  // Sử dụng một middleware xử lý lỗi tùy chỉnh cho Multer
+  (req, res, next) => {
+    upload.single("file")(req, res, (err: any) => {
+      if (err instanceof multer.MulterError) {
+        // Lỗi từ Multer (ví dụ: FILE_TOO_LARGE)
+        return res
+          .status(400)
+          .json({ error: `Upload thất bại: ${err.message}` });
+      } else if (err) {
+        // Lỗi khác (ví dụ: từ fileFilter)
+        return res
+          .status(400)
+          .json({ error: `Upload thất bại: ${err.message}` });
+      }
+      next(); // Chuyển sang middleware tiếp theo nếu không có lỗi
+    });
+  },
   async (req, res): Promise<void> => {
     try {
       const file = req.file;
+
       if (!file) {
-        res.status(400).json({ error: "Không có file nào được upload" });
+        res.status(400).json({ error: "Không có file nào được upload." });
         return;
       }
 
+      console.log("Kích thước file nhận được:", file.size, "bytes");
+      console.log("Loại MIME của file:", file.mimetype);
+
+      // Tạo tên file duy nhất với phần mở rộng .jpeg
       const uniqueFileName = `${uuidv4()}.jpeg`;
-      // const filename = `${Date.now()}.jpeg`;
-      // const outputPath = path.join(__dirname, "../../uploads", filename);
-
-      // Đảm bảo thư mục tồn tại
-      // const uploadDir = path.join(__dirname, "../../uploads");
-      // if (!fs.existsSync(uploadDir)) {
-      //   fs.mkdirSync(uploadDir, { recursive: true });
-      // }
-
-      // Trả về URL chính xác
-      // const filePath = `/uploads/${filename}`;
-      // res.json({ url: filePath });
 
       // Nén và resize ảnh
+      // Kiểm tra xem file.buffer có dữ liệu không trước khi truyền cho Sharp
+      if (!file.buffer || file.buffer.length === 0) {
+        res.status(400).json({ error: "Dữ liệu ảnh không hợp lệ hoặc trống." });
+        return;
+      }
+
       const resizedBuffer = await sharp(file.buffer)
         .resize(800) // resize width 800px, height auto
         .jpeg({ quality: 70 }) // nén ảnh
         .toBuffer();
 
       // Upload file lên Supabase Storage
-      // Tạo một "Bucket" trong Supabase Storage của bạn, ví dụ: "thumbnails"
-      const { data, error } = await supabase.storage
-        .from("thumbnails") // Tên bucket của bạn (cần tạo trong Supabase Dashboard)
+      const { data, error: uploadError } = await supabase.storage
+        .from("thumbnails") // Tên bucket của bạn
         .upload(uniqueFileName, resizedBuffer, {
           contentType: "image/jpeg",
-          upsert: false, // Không ghi đè nếu file đã tồn tại
+          upsert: false,
         });
 
-      if (error) {
-        console.error("🔥 Supabase upload failed:", error);
+      if (uploadError) {
+        console.error("🔥 Supabase upload failed:", uploadError);
         res.status(500).json({
           error: "Upload ảnh lên Supabase thất bại",
-          details: error.message,
+          details: uploadError.message,
         });
         return;
       }
 
-      // Supabase trả về đường dẫn tới file công khai
-      const publicURLResponse = supabase.storage
+      // Lấy URL công khai. getPublicUrl không trả về lỗi.
+      const { data: publicUrlData } = supabase.storage
         .from("thumbnails")
         .getPublicUrl(uniqueFileName);
 
-      // if (publicURLResponse.error) {
-      //   console.error(
-      //     "🔥 Supabase get public URL failed:",
-      //     publicURLResponse.error
-      //   );
-      //   return res
-      //     .status(500)
-      //     .json({
-      //       error: "Không thể lấy URL công khai của ảnh",
-      //       details: publicURLResponse.error.message,
-      //     });
-      // }
-
-      const publicUrl = publicURLResponse.data.publicUrl;
+      const publicUrl = publicUrlData.publicUrl;
 
       // Trả về URL công khai
-      // Frontend sẽ trực tiếp sử dụng URL này để hiển thị ảnh
       res.json({ url: publicUrl });
     } catch (err) {
-      console.error("🔥 Sharp processing failed:", err);
-      res.status(500).json({ error: "Image processing failed" });
+      // Bắt lỗi tổng quát từ Sharp hoặc các thao tác khác
+      console.error("🔥 Lỗi xử lý hoặc upload ảnh:", err);
+      res.status(500).json({
+        error: "Lỗi xử lý hoặc upload ảnh lên server.",
+        details: (err as Error).message,
+      });
     }
   }
 );
@@ -105,60 +121,66 @@ const deleteImageHandler = async (req: Request, res: Response) => {
   const { imageUrl } = req.body;
 
   if (!imageUrl) {
-    res.status(400).json({ error: "URL ảnh không được cung cấp" });
-    return;
+    return res.status(400).json({ error: "URL ảnh không được cung cấp." });
   }
 
-  // Trích xuất tên file từ URL
-  const filename = path.basename(imageUrl);
+  try {
+    // Trích xuất tên bucket và tên file từ URL Supabase
+    const urlParts = imageUrl.split("/");
+    const publicIndex = urlParts.indexOf("public");
 
-  const { error } = await supabase.storage
-    .from("thumbnails")
-    .remove([filename]);
+    // Kiểm tra định dạng URL cơ bản
+    if (publicIndex === -1 || publicIndex + 1 >= urlParts.length) {
+      return res.status(400).json({
+        error: "Định dạng URL ảnh không hợp lệ cho Supabase Storage.",
+      });
+    }
 
-  if (error) {
-    console.error("🔥 Supabase delete failed:", error);
-    res.status(500).json({
-      error: "Không thể xóa ảnh",
-      details: error.message,
+    const bucketName = urlParts[publicIndex + 1]; // Ví dụ: "thumbnails"
+    const fileNameInBucket = urlParts.slice(publicIndex + 2).join("/"); // Phần còn lại là tên file, bao gồm cả sub-folder nếu có
+
+    if (!bucketName || !fileNameInBucket) {
+      return res.status(400).json({
+        error: "Không thể trích xuất tên bucket hoặc tên file từ URL.",
+      });
+    }
+
+    const { error: deleteError } = await supabase.storage
+      .from(bucketName)
+      .remove([fileNameInBucket]);
+
+    if (deleteError) {
+      console.error("🔥 Supabase delete failed:", deleteError);
+      // Xử lý lỗi cụ thể hơn nếu cần (ví dụ: file không tồn tại)
+      if (deleteError.message.includes("not found")) {
+        // Kiểm tra thông báo lỗi của Supabase
+        return res.status(404).json({
+          error: `File ảnh không tồn tại trên Supabase Storage: ${fileNameInBucket}`,
+        });
+      }
+      return res.status(500).json({
+        error: "Không thể xóa ảnh từ Supabase Storage.",
+        details: deleteError.message,
+      });
+    }
+
+    res.status(200).json({
+      message: `Ảnh ${fileNameInBucket} đã được xóa thành công từ Supabase Storage.`,
     });
-    return;
+  } catch (err) {
+    console.error("🔥 Lỗi trong quá trình xóa ảnh từ Supabase Storage:", err);
+    res.status(500).json({
+      error: "Lỗi nội bộ khi xóa ảnh từ Supabase Storage.",
+      details: (err as Error).message,
+    });
   }
-  res.status(200).json({ message: ` Ảnh ${filename} đã được xóa ` });
-
-  // Feature xóa trên local
-  // const filePathToDelete = path.join(__dirname, "../../uploads", filename);
-
-  // // Kiểm tra xem file có tồn tại và nằm trong thư mục 'uploads' không để tăng cao hệ thống bảo mật
-  // if (!filePathToDelete.startsWith(path.join(__dirname, "../../uploads"))) {
-  //   res
-  //     .status(403)
-  //     .json({ error: "Truy cập bị từ chối: Đường dẫn file không hợp lệ." });
-  //   return;
-  // }
-
-  // fs.unlink(filePathToDelete, (err) => {
-  //   if (err) {
-  //     if (err.code === "ENOENT") {
-  //       console.warn(
-  //         `Attempted to delete non-existent file: ${filePathToDelete}`
-  //       );
-  //       res.status(404).json({ error: "File không tồn tại hoặc đã bị xóa." });
-  //       return;
-  //     }
-  //     console.error(`Error deleting file: ${filePathToDelete}:`, err);
-  //     res.status(500).json({ error: "Không thể xóa file." });
-  //     return;
-  //   }
-
-  //   res
-  //     .status(200)
-  //     .json({ message: `File ${filename} đã được xóa thành công.` });
-  // });
 };
 
-router.delete("/delete-image", deleteImageHandler);
+router.delete("/delete-image", (req, res, next) => {
+  deleteImageHandler(req, res).catch(next);
+});
 
+// Các routes còn lại
 router.get("/", getNews);
 router.get("/:id", getNewsDetail);
 router.post("/", createNews);
