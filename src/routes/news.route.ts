@@ -21,7 +21,10 @@ const storage = multer.memoryStorage();
 // Ví dụ: giới hạn 5MB. Điều này giúp ngăn chặn các file quá lớn gây lỗi Sharp
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+  limits: {
+    fileSize: 25 * 1024 * 1024, // 25 MB
+    files: 1, // Chỉ cho phép 1 files
+  },
   fileFilter: (req, file, cb) => {
     // Chỉ chấp nhận các loại file ảnh phổ biến
     if (file.mimetype.startsWith("image/")) {
