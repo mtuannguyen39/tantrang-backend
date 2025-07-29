@@ -16,6 +16,7 @@ export const createNews = (data: {
   content: string;
   thumbnail?: string;
   categoryId: number;
+  liturgicalYearId: number;
 }) => {
   return prisma.news.create({ data });
 };

@@ -14,7 +14,15 @@ export const getNewsDetail = async (req: Request, res: Response) => {
 };
 
 export const createNews = async (req: Request, res: Response) => {
-  const { title, slug, content, thumbnail, categoryId, isFeatured } = req.body;
+  const {
+    title,
+    slug,
+    content,
+    thumbnail,
+    categoryId,
+    isFeatured,
+    liturgicalYearId,
+  } = req.body; // Thêm phần liturgicalYearId vào để tạo có thể chọn Năm phụng vụ.
   try {
     if (isFeatured) {
       await prisma.news.updateMany({
@@ -30,6 +38,7 @@ export const createNews = async (req: Request, res: Response) => {
         thumbnail,
         categoryId: parseInt(categoryId),
         isFeatured: isFeatured ?? false,
+        liturgicalYearId: parseInt(liturgicalYearId),
       },
     });
     res.status(201).json(created);
@@ -41,7 +50,15 @@ export const createNews = async (req: Request, res: Response) => {
 // Bug: khi xóa bài thì sẽ xóa luôn hiển thị admin
 export const updateNews = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { title, slug, content, thumbnail, categoryId, isFeatured } = req.body;
+  const {
+    title,
+    slug,
+    content,
+    thumbnail,
+    categoryId,
+    isFeatured,
+    liturgicalYearId,
+  } = req.body;
 
   try {
     // Nếu đánh dấu nổi bật, reset các bài khác
@@ -61,6 +78,7 @@ export const updateNews = async (req: Request, res: Response) => {
         thumbnail,
         categoryId: parseInt(categoryId),
         isFeatured: isFeatured ?? false,
+        liturgicalYearId: parseInt(liturgicalYearId),
       },
     });
 

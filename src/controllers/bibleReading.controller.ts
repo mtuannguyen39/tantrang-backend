@@ -31,3 +31,13 @@ export const createReading = async (req: Request, res: Response) => {
     res.status(400).json({ error: "Không thể tạo Kinh Thánh" });
   }
 };
+
+export const deleteBible = async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    await readingService.deleteReading(id);
+    res.json({ message: "Xóa thành công!" });
+  } catch {
+    res.status(404).json({ error: "Không tìm thấy sách Kinh Thánh!" });
+  }
+};

@@ -23,6 +23,10 @@ model LiturgicalYear {
     name            String // Ví dụ: "Năm phụng vụ A - 2025"
     code            String // A, B, C
     year            Int // 2025
+    isFeatured      Boolean @default(false)
+    imageUrl        String?
+    description     String
+    title           String
 
     readings        BibleReading[]
     news            News[]

@@ -6,10 +6,21 @@ export const getAllYear = () => {
   });
 };
 
+export const getYearById = (id: number) => {
+  return prisma.liturgicalYear.findUnique({
+    where: { id },
+    include: { category: true },
+  });
+};
+
 export const createYear = (data: {
   name: string;
   code: string;
   year: number;
+  isFeatured: boolean;
+  imageUrl: string;
+  description: string;
+  title: string;
   categoryId: number;
 }) => {
   return prisma.liturgicalYear.create({ data });

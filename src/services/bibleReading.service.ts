@@ -18,3 +18,6 @@ export const createReading = (data: {
 }) => {
   return prisma.bibleReading.create({ data });
 };
+export const deleteReading = (id: number) => {
+  return prisma.bibleReading.delete({ where: { id } });
+};
