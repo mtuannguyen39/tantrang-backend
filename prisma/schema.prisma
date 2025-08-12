@@ -72,14 +72,11 @@ model BibleReading {
     title           String
     slug            String @unique
     scripture       String // Ví dụ: Ga 3, 16-18
-    content         String
-    date            DateTime
+    description     String
     liturgicalYearId Int
+    thumbnail       String?
 
     liturgicalYear LiturgicalYear @relation(fields: [liturgicalYearId], references: [id])
     categoryId      Int
     category        Category @relation(fields: [categoryId], references: [id])
-
-    createdAt       DateTime @default(now())
-    updatedAt       DateTime @updatedAt
 }

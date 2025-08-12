@@ -3,7 +3,13 @@ import prisma from "../prisma/client";
 export const getAllReadings = () => {
   return prisma.bibleReading.findMany({
     include: { liturgicalYear: true },
-    orderBy: { date: "asc" },
+  });
+};
+
+export const getReadingById = (id: number) => {
+  return prisma.bibleReading.findUnique({
+    where: { id },
+    include: { category: true },
   });
 };
 
@@ -11,10 +17,10 @@ export const createReading = (data: {
   title: string;
   slug: string;
   scripture: string;
-  content: string;
-  date: Date;
+  description: string;
   liturgicalYearId: number;
   categoryId: number;
+  thumbnail: string;
 }) => {
   return prisma.bibleReading.create({ data });
 };
