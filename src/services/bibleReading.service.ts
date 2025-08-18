@@ -17,7 +17,11 @@ export const createReading = (data: {
   title: string;
   slug: string;
   scripture: string;
-  description: string;
+  reading1?: string;
+  reading2?: string;
+  psalm?: string;
+  alleluia?: string;
+  gospel: string;
   liturgicalYearId: number;
   categoryId: number;
   thumbnail: string;

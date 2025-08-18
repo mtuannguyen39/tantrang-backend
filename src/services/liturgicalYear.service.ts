@@ -18,9 +18,9 @@ export const createYear = (data: {
   code: string;
   year: number;
   isFeatured: boolean;
-  imageUrl: string;
-  description: string;
-  title: string;
+  imageUrl?: string;
+  description?: string;
+  title?: string;
   categoryId: number;
 }) => {
   return prisma.liturgicalYear.create({ data });

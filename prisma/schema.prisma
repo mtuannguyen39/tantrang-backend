@@ -25,8 +25,8 @@ model LiturgicalYear {
     year            Int // 2025
     isFeatured      Boolean @default(false)
     imageUrl        String?
-    description     String
-    title           String
+    description     String?
+    title           String?
 
     readings        BibleReading[]
     news            News[]
@@ -38,7 +38,7 @@ model LiturgicalYear {
 model News {
     id              Int @id @default(autoincrement())
     title           String
-    slug            String @unique 
+    slug            String? @unique 
     content         String 
     thumbnail       String?
     categoryId      Int
@@ -55,7 +55,7 @@ model News {
 model TNTT {
     id              Int @id @default(autoincrement())
     title           String
-    slug            String @unique
+    slug            String? @unique
     description     String?
     thumbnail       String?
     isFeatured       Boolean @default(false)
@@ -70,9 +70,13 @@ model TNTT {
 model BibleReading {
     id              Int @id @default(autoincrement())
     title           String
-    slug            String @unique
+    slug            String? @unique
     scripture       String // Ví dụ: Ga 3, 16-18
-    description     String
+    reading1        String?
+    reading2        String?
+    psalm           String?
+    alleluia        String?
+    gospel          String
     liturgicalYearId Int
     thumbnail       String?
 

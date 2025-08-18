@@ -12,9 +12,8 @@ export const getTnttById = async (id: number) => {
 
 export const createTntt = (data: {
   title: string;
-  slug: string;
-  description: string;
-  content: string;
+  slug?: string;
+  description?: string;
   thumbnail?: string;
   categoryId: number;
 }) => {

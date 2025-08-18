@@ -12,11 +12,11 @@ export const getNewsById = (id: number) => {
 
 export const createNews = (data: {
   title: string;
-  slug: string;
+  slug?: string;
   content: string;
   thumbnail?: string;
   categoryId: number;
-  liturgicalYearId: number;
+  liturgicalYearId?: number;
 }) => {
   return prisma.news.create({ data });
 };
