@@ -11,16 +11,18 @@ import categoryRoutes from "./routes/category.route";
 import tnttRoutes from "./routes/tntt.route";
 import yearRoutes from "./routes/liturgicalYear.route";
 import categoryContentRoutes from "./routes/categoryContent.route";
-import adminRoutes from "./routes/admin.route";
+import adminRoutes from "./routes/admin.routes";
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use(errorHandler);
 
+// Routes
 app.use("/api/reading", readingRoutes);
 app.use("/api/category", categoryRoutes);
 app.use("/api/tntt", tnttRoutes);
