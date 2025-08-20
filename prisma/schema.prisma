@@ -7,6 +7,32 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
+model Admin {
+    id              Int @id @default(autoincrement())
+    username        String @unique
+    email           String @unique
+    password        String 
+    role            AdminRole @default(NEWS_ADMIN)
+    phoneNumber     String?
+    isActive        Boolean @default(true)
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt
+    createdBy       Int?
+    creator         Admin?  @relation("AdminCreator", fields: [createdBy], references: [id])
+    createdAdmins   Admin[] @relation("AdminCreator")
+
+    apiToken        String? @unique
+
+    @@map("Admin")
+}
+
+enum AdminRole {
+    SUPER_ADMIN
+    NEWS_ADMIN
+    TNTT_ADMIN
+    BIBLE_ADMIN
+}
+
 model Category {
     id              Int @id @default(autoincrement())
     name            String

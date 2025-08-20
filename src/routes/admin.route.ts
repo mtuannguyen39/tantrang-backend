@@ -1,8 +1,17 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import { getAdminStats } from "../controllers/admin.controller";
+import adminAuthRoutes from "./admin.auth.routes";
+import adminManagementRoutes from "./admin.management.routes";
 
 const router = express.Router();
 
-router.get("/stats", getAdminStats as (req: Request, res: Response) => any);
+// Stats endpoint (existing)
+router.get("/stats", getAdminStats);
+
+// Auth routes
+router.use("/auth", adminAuthRoutes);
+
+// Management routes
+router.use("/management", adminManagementRoutes);
 
 export default router;
