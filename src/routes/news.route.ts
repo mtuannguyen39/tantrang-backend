@@ -78,8 +78,8 @@ router.post(
       }
 
       const resizedBuffer = await sharp(file.buffer)
-        .resize(800) // resize width 800px, height auto
-        .jpeg({ quality: 70 }) // nén ảnh
+        .resize(1000) // resize width 800px, height auto
+        .jpeg({ quality: 100 }) // nén ảnh
         .toBuffer();
 
       // Upload file lên Supabase Storage
