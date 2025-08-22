@@ -1,18 +1,17 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { Request, Response, NextFunction } from "express";
 
-export async function middleware(request: NextRequest) {
-  // Check if accessing admin routes(except login)
+export function adminMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   if (
-    request.nextUrl.pathname.startsWith("/admin") &&
-    !request.nextUrl.pathname.startsWith("/admin/auth/login")
+    req.path.startsWith("/admin") &&
+    !req.path.startsWith("/admin/auth/login")
   ) {
-    return NextResponse.next();
+    // cho phép đi tiếp
+    return next();
   }
 
-  return NextResponse.next();
+  return next();
 }
-
-export const config = {
-  matcher: ["/admin/:path"],
-};

@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import path from "path";
 
 import { errorHandler } from "./middlewares/errorHandler";
+import { adminMiddleware } from "./middlewares/middlewares";
 
 import newsRoutes from "./routes/news.route";
 import readingRoutes from "./routes/bibleReading.route";
@@ -20,6 +21,8 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Middlewares
+app.use(adminMiddleware);
 app.use(errorHandler);
 
 // Routes
